@@ -21,6 +21,11 @@ Public Class cTicket
     Private _Tabla As DataGridView      'Número del codigo de barra
     Private _Impresora As String        'Nombre de la impresora
     Private _Mensaje As String          'Mensaje de fin de ticket : "Gracias por su preferencia"
+    Private _Art As Integer             'Indice de la columna articulo en el DataGridView
+    Private _Cant As Integer            'Indice de la columna cantidad en el DataGridView
+    Private _Sub As Integer             'Indice de la columna subtotal en el DataGridView
+    Private _Total As String           'Total dela venta
+    Private _Cambio
 
 #End Region
 #Region "Declaraciones de Funcionamiento"
@@ -60,6 +65,48 @@ Public Class cTicket
         End Get
         Set(value As String)
             _Empresa = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Indice de la columna articulo en el DataGridView
+    ''' </summary>
+    ''' <value>Integer</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property IndexArticulo As String
+        Get
+            Return _Art
+        End Get
+        Set(value As String)
+            _Art = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Indice de la columna cantidad en el DataGridView
+    ''' </summary>
+    ''' <value>Integer</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property IndexCantidad As String
+        Get
+            Return _Cant
+        End Get
+        Set(value As String)
+            _Cant = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Indice de la columna articulo en el DataGridView
+    ''' </summary>
+    ''' <value>Integer</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property IndexSubTotal As String
+        Get
+            Return _Sub
+        End Get
+        Set(value As String)
+            _Sub = value
         End Set
     End Property
     ''' <summary>
@@ -224,6 +271,8 @@ Public Class cTicket
 #Region "Funciones privadas"
 #Region "Funciones generales"
     Private Function Imprimir_Cuerpo() As Boolean
+        PrintHeader()
+
         Return False
     End Function
     Private Function Imprimir_Imagen(ByVal Ima As Boolean) As Boolean
@@ -263,19 +312,28 @@ Public Class cTicket
 
     Private Sub PrintHeader()
         'eInit Espacio en blanco
-        If Not Telefono = "" Then
+        If Not _Telefono = "" Then
             Print(eCentre + _Telefono)
         End If
-        Print(_Calle + " C.P. " + _CP)
-        Print(_Colonia)
-        Print(_Ciudad + eLeft)
-
+        If Not _Calle = "" Then
+            Print(_Calle + " C.P. " + _CP)
+        End If
+        If Not _Colonia = "" Then
+            Print(_Colonia)
+        End If
+        If Not _Ciudad = "" Then
+            Print(_Ciudad + eLeft)
+        End If
         PrintLinea()
+        '      (0,20)              (3,21)      
+        Print("Articulo             Cant.  SubT")
     End Sub
 
     Private Sub PrintFooter()
         PrintLinea()
-        Print(eCentre + _Mensaje + eLeft)
+        If Not _Mensaje = "" Then
+            Print(eCentre + _Mensaje + eLeft)
+        End If
         Print(vbLf + vbCrLf + eCut + eDrawer)
     End Sub
 
