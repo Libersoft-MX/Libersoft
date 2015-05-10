@@ -272,8 +272,142 @@ Public Class cTicket
 #Region "Funciones generales"
     Private Function Imprimir_Cuerpo() As Boolean
         PrintHeader()
-
         Return False
+    End Function
+
+
+    ''' <summary>
+    ''' Recibe como parametro un numero y devuelve el numero expresado en cadena
+    ''' </summary>
+    ''' <param name="Num">Número a convertir a texto</param>
+    ''' <returns>Cadena</returns>
+    ''' <remarks></remarks>
+    Private Function NumToTex(ByVal Num As String) As String
+        Dim Num2 As Integer
+        Dim Num3 As Integer
+        Dim Cd As String = ""
+        Dim ant As Boolean = False
+        Num2 = Num
+        While Not Num2 = 0
+            If Num2 > 999 Then
+                If Num2 < 2000 Then
+                    Cd = "mil "
+                ElseIf Num2 < 20000 Then
+                    Cd = Numero(CInt(Num2 \ 1000)) + " " + Numero(1000) + " "
+                Else
+                    Num3 = CInt(Num2 \ 1000)
+                    Cd = Numero(CInt(Num3 \ 10) * 10) + " "
+                    Num3 = Num3 Mod 10
+                    If Num3 Then
+                        Cd = Cd + " y " + Numero(Num3) + " mil "
+                    Else
+                        Cd = Cd + " mil "
+                    End If
+                End If
+                Num2 = Num2 Mod 1000
+            ElseIf Num2 > 99 Then
+                If Num2 = 100 Then
+                    Cd = Cd + "cien "
+                Else
+                    Cd = Cd + Numero(CInt(Num2 \ 100) * 100) + " "
+                End If
+                Num2 = Num2 Mod 100
+            ElseIf Num2 > 19 Then
+                Cd = Cd + Numero(CInt(Num2 \ 10) * 10) + " "
+                Num2 = Num2 Mod 10
+                ant = True
+            Else
+                If ant Then
+                    Cd = Cd + "y " + Numero(Num2)
+                Else
+                    Cd = Cd + Numero(Num2)
+                End If
+
+                Num2 = 0
+            End If
+        End While
+
+        Return StrConv(Cd, VbStrConv.ProperCase)
+    End Function
+
+    Private Function Numero(ByVal Num As Integer) As String
+        Select Case Num
+            Case 1
+                Return "uno"
+            Case 2
+                Return "dos"
+            Case 3
+                Return "tres"
+            Case 4
+                Return "cuatro"
+            Case 5
+                Return "cinco"
+            Case 6
+                Return "seis"
+            Case 7
+                Return "siete"
+            Case 8
+                Return "ocho"
+            Case 9
+                Return "nueve"
+            Case 10
+                Return "diez"
+            Case 11
+                Return "once"
+            Case 12
+                Return "doce"
+            Case 13
+                Return "trece"
+            Case 14
+                Return "catorce"
+            Case 15
+                Return "quince"
+            Case 16
+                Return "dieciséis"
+            Case 17
+                Return "diecisiete"
+            Case 18
+                Return "dieciocho"
+            Case 19
+                Return "diecinueve"
+            Case 20
+                Return "veinte"
+            Case 30
+                Return "treinta"
+            Case 40
+                Return "cuarenta"
+            Case 50
+                Return "cincuenta"
+            Case 60
+                Return "sesenta"
+            Case 70
+                Return "setenta"
+            Case 80
+                Return "ochenta"
+            Case 90
+                Return "noventa"
+            Case 100
+                Return "ciento"
+            Case 200
+                Return "doscientos"
+            Case 300
+                Return "trescientos"
+            Case 400
+                Return "cuatrocientos"
+            Case 500
+                Return "quinientos"
+            Case 600
+                Return "seiscientos"
+            Case 700
+                Return "setecientos"
+            Case 800
+                Return "ochocientos"
+            Case 900
+                Return "novecientos"
+            Case 1000
+                Return "mil"
+        End Select
+        Return ""
     End Function
     Private Function Imprimir_Imagen(ByVal Ima As Boolean) As Boolean
         Dim Imagen_item As Image
