@@ -8,25 +8,27 @@ Imports System.Runtime.InteropServices  'Usado para imprimir ESC/POS
 Public Class cTicket
 
 #Region "Declaraciones de Datos del ticket"
-    '***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET *****
-    Private _Logotipo As Image          'Logotipo de la empresa         ID ->1
-    Private _Empresa As String          'Nombre de la empresa
-    Private _Calle As String            'Nombre de la calle donde esta ubicada
-    Private _Colonia As String          'Nombre de la colonia
-    Private _Ciudad As String           'Nombre del ciudad
-    Private _Telefono As String         'Telefono
-    Private _CP As String = ""          'Código Postal
-    Private _BarCode_Text As String     'Code 39
-    Private _Barcode_Ima As Image       'Imagen del código de barra     ID ->0
-    Private _Tabla As DataGridView      'Número del codigo de barra
-    Private _Impresora As String        'Nombre de la impresora
-    Private _Mensaje As String          'Mensaje de fin de ticket : "Gracias por su preferencia"
-    Private _Art As Integer             'Indice de la columna articulo en el DataGridView
-    Private _Cant As Integer            'Indice de la columna cantidad en el DataGridView
-    Private _Sub As Integer             'Indice de la columna subtotal en el DataGridView
-    Private _Total As String            'Total dela venta
-    Private _Correo As String           'Correo de la empresa
-    Private _Cambio As String           'Cambio de la venta
+    '***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET *****************
+
+    Private _Logotipo As Image = Nothing                            'Logotipo de la empresa         ID ->1
+    Private _Empresa As String = "Aceros Inoxidables Refacciones y Equipos" 'Nombre de la empresa
+    Private _Calle As String = "Calle lino Merino #226"             'Nombre de la calle donde esta ubicada
+    Private _Colonia As String = "Colonia Centro"                   'Nombre de la colonia
+    Private _Ciudad As String = "Villahermosa Tab. Mex."            'Nombre del ciudad
+    Private _Telefono As String = "314-9906"                        'Telefono
+    Private _CP As String = "86000"                                 'Código Postal
+    Private _BarCode_Text As String = ""                            'Code 39
+    Private _Barcode_Ima As Image = Nothing                         'Imagen del código de barra     ID ->0
+    Private _Tabla As DataGridView = Nothing                        'Número del codigo de barra
+    Private _Impresora As String = "POS58"                          'Nombre de la impresora
+    Private _Mensaje As String = "¡Gracias por su preferencia!"     'Mensaje de fin de ticket : "Gracias por su preferencia"
+    Private _Art As Integer = 0                                     'Indice de la columna articulo en el DataGridView
+    Private _Cant As Integer = 1                                    'Indice de la columna cantidad en el DataGridView
+    Private _Sub As Integer = 2                                     'Indice de la columna subtotal en el DataGridView
+    Private _Total As String = "0.00"                               'Total dela venta
+    Private _Correo As String = "plasticos_y_derivados@hotmail.com" 'Correo de la empresa
+    Private _Cambio As String = "0.00"                              'Cambio de la venta
+    Private _efectivo As String = "0.00"                            'Efectivo con el que se pagó
 
 #End Region
 #Region "Declaraciones de Funcionamiento"
@@ -54,6 +56,20 @@ Public Class cTicket
     '*************************************
 #End Region
 #Region "Propiedades"
+    ''' <summary>
+    ''' Efectivo con el cual está pagando el cliente
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns>String</returns>
+    ''' <remarks></remarks>
+    Public Property Efectivo As String
+        Get
+            Return _efectivo
+        End Get
+        Set(value As String)
+            _efectivo = value
+        End Set
+    End Property
     ''' <summary>
     ''' Cambio que se le devlverá al cliente
     ''' </summary>
@@ -296,20 +312,20 @@ Public Class cTicket
 #End Region
 #Region "Funciones públicas"
     ''' <summary>
-    ''' Imprimi ticket
+    ''' Imprime ticket
     ''' </summary>
-    ''' <returns></returns>
+    ''' <returns>Boolean</returns>
     ''' <remarks></remarks>
     Public Function ImprimirTicket() As Boolean
-        If Not IsNothing(_Logotipo) Then
-            Imprimir_Imagen(True)
+        If StartPrint() Then
+            PrintHeader()
+            Imprimir_Cuerpo()
+            PrintFooter()
+            EndPrint()
+            Return True
+        Else
+            Return False
         End If
-        Imprimir_Cuerpo()
-        If Not IsNothing(_Barcode_Ima) Then
-            Imprimir_Imagen(False)
-        End If
-
-        Return True
     End Function
     ''' <summary>
     ''' Convierte un número a texto especificando los pesos y centavos
@@ -332,8 +348,12 @@ Public Class cTicket
 #Region "Funciones privadas"
 #Region "Funciones generales"
     Private Function Imprimir_Cuerpo() As Boolean
-        PrintHeader()
-        Return False
+        If _Tabla.RowCount > 0 Then
+
+            Return True
+        Else
+            Return False
+        End If
     End Function
 
 
@@ -472,6 +492,7 @@ Public Class cTicket
     End Function
     Private Function Imprimir_Imagen(ByVal Ima As Boolean) As Boolean
         Dim Imagen_item As Image
+        ImagenPrint = Ima
         If Ima Then
             Imagen_item = _Logotipo
         Else
@@ -501,14 +522,18 @@ Public Class cTicket
     End Sub
 #End Region
 #Region "Operaciones basicas con la impresora"
-    Private Sub StartPrint()
-        OpenPrint(_Impresora)
-    End Sub
+    Private Function StartPrint() As Boolean
+        Return OpenPrint(_Impresora)
+    End Function
 
     Private Sub PrintHeader()
         'eInit Espacio en blanco
-        If Not _Telefono = "" Then
-            Print(eCentre + _Telefono)
+        If Not IsNothing(_Logotipo) Then
+            Imprimir_Imagen(True)
+        End If
+        Print(eCentre)
+        If Not _Empresa = "" Then
+            Print(_Empresa)
         End If
         If Not _Calle = "" Then
             Print(_Calle + " C.P. " + _CP)
@@ -517,15 +542,30 @@ Public Class cTicket
             Print(_Colonia)
         End If
         If Not _Ciudad = "" Then
-            Print(_Ciudad + eLeft)
+            Print(_Ciudad)
         End If
+        If Not _Telefono = "" Then
+            Print(_Telefono)
+        End If
+        If Not _Correo = "" Then
+            Print("E-mail: " + _Correo)
+        End If
+        Print(eLeft)
         PrintLinea()
         '      (0,20)              (3,21)      
         Print("Articulo             Cant.  SubT")
     End Sub
 
     Private Sub PrintFooter()
+        Print(eRight + "Total: $" + _Total)
         PrintLinea()
+        Print(NumeroToTexto(eCentre + _Total) + " 00/100 M.N.")
+        Print(eLeft + "Efectivo: $" + _efectivo + eRight + "Cambio: $" + _Cambio)
+        If Not IsNothing(_Barcode_Ima) Then
+            Imprimir_Imagen(False)
+            Print(eCentre + _BarCode_Text)
+        End If
+
         If Not _Mensaje = "" Then
             Print(eCentre + _Mensaje + eLeft)
         End If
@@ -535,11 +575,9 @@ Public Class cTicket
     Private Sub Print(Line As String)
         SendStringToPrinter(_Impresora, Line + vbLf)
     End Sub
-
     Private Sub PrintLinea()
         Print(eInit + "- - - - - - - - - - - - - - - -" + eInit)
     End Sub
-
     Private Sub EndPrint()
         ClosePrint()
     End Sub
@@ -614,6 +652,8 @@ Public Class cTicket
                 If StartDocPrinter(hPrinter, 1, di) Then
                     If StartPagePrinter(hPrinter) Then
                         PrinterOpen = True
+                    Else
+                        PrinterOpen = False
                     End If
                 End If
             End If
