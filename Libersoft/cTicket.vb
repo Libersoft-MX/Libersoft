@@ -24,8 +24,9 @@ Public Class cTicket
     Private _Art As Integer             'Indice de la columna articulo en el DataGridView
     Private _Cant As Integer            'Indice de la columna cantidad en el DataGridView
     Private _Sub As Integer             'Indice de la columna subtotal en el DataGridView
-    Private _Total As String           'Total dela venta
-    Private _Cambio
+    Private _Total As String            'Total dela venta
+    Private _Correo As String           'Correo de la empresa
+    Private _Cambio As String           'Cambio de la venta
 
 #End Region
 #Region "Declaraciones de Funcionamiento"
@@ -53,6 +54,34 @@ Public Class cTicket
     '*************************************
 #End Region
 #Region "Propiedades"
+    ''' <summary>
+    ''' Cambio que se le devlverá al cliente
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns>String</returns>
+    ''' <remarks></remarks>
+    Public Property Cambio As String
+        Get
+            Return _Cambio
+        End Get
+        Set(value As String)
+            _Cambio = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Correo electrónico de la empresa
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns>String</returns>
+    ''' <remarks></remarks>
+    Public Property Correo As String
+        Get
+            Return _Correo
+        End Get
+        Set(value As String)
+            _Correo = value
+        End Set
+    End Property
     ''' <summary>
     ''' Nombre de la empresa
     ''' </summary>
@@ -266,7 +295,39 @@ Public Class cTicket
 
 #End Region
 #Region "Funciones públicas"
+    ''' <summary>
+    ''' Imprimi ticket
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function ImprimirTicket() As Boolean
+        If Not IsNothing(_Logotipo) Then
+            Imprimir_Imagen(True)
+        End If
+        Imprimir_Cuerpo()
+        If Not IsNothing(_Barcode_Ima) Then
+            Imprimir_Imagen(False)
+        End If
 
+        Return True
+    End Function
+    ''' <summary>
+    ''' Convierte un número a texto especificando los pesos y centavos
+    ''' </summary>
+    ''' <param name="Num">Número a convertir a texto</param>
+    ''' <returns>String</returns>
+    ''' <remarks></remarks>
+    Public Function NumeroToTexto(ByVal Num As Decimal) As String
+        Dim Num2 As Integer
+        Dim Cadena As String
+        Num2 = Fix(Num)
+        Cadena = NumToTex(Num2) + "pesos"
+        Num2 = (Num - Num2) * 100
+        If Num2 Then
+            Cadena = Cadena + " y " + NumToTex(Num2) + "centavos"
+        End If
+        Return StrConv(Cadena, VbStrConv.ProperCase)
+    End Function
 #End Region
 #Region "Funciones privadas"
 #Region "Funciones generales"
@@ -318,16 +379,16 @@ Public Class cTicket
                 ant = True
             Else
                 If ant Then
-                    Cd = Cd + "y " + Numero(Num2)
+                    Cd = Cd + "y " + Numero(Num2) + " "
                 Else
-                    Cd = Cd + Numero(Num2)
+                    Cd = Cd + Numero(Num2) + " "
                 End If
 
                 Num2 = 0
             End If
         End While
 
-        Return StrConv(Cd, VbStrConv.ProperCase)
+        Return Cd
     End Function
 
     Private Function Numero(ByVal Num As Integer) As String
