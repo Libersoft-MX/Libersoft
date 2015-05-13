@@ -2,59 +2,63 @@
 Imports System.Drawing                  'Usado para el objeto Image
 Imports System.Windows.Forms            'Usado para el DataGridView
 Imports System.Drawing.Printing         'Usado para imprimir con PrintDocument
-Imports System.Runtime.InteropServices  'Usado para imprimir ESC/POS
 
 #End Region
 Public Class cTicket
-
 #Region "Declaraciones de Datos del ticket"
     '***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET *****************
 
     Private _Logotipo As Image = Nothing                            'Logotipo de la empresa         ID ->1
-    Private _Empresa As String = "Aceros Inoxidables Refacciones y Equipos" 'Nombre de la empresa
-    Private _Calle As String = "Calle lino Merino #226"             'Nombre de la calle donde esta ubicada
+    Private _Empresa As String = "Aceros Inoxidablestyzxc Refacciones y Equipos" 'Nombre de la empresa
+    Private _Calle As String = "Calle Lino Merino #226"             'Nombre de la calle donde esta ubicada
     Private _Colonia As String = "Colonia Centro"                   'Nombre de la colonia
     Private _Ciudad As String = "Villahermosa Tab. Mex."            'Nombre del ciudad
-    Private _Telefono As String = "314-9906"                        'Telefono
+    Private _Telefono As String = "314-99-06"                       'Telefono
     Private _CP As String = "86000"                                 'Código Postal
     Private _BarCode_Text As String = ""                            'Code 39
     Private _Barcode_Ima As Image = Nothing                         'Imagen del código de barra     ID ->0
     Private _Tabla As DataGridView = Nothing                        'Número del codigo de barra
-    Private _Impresora As String = "POS58"                          'Nombre de la impresora
     Private _Mensaje As String = "¡Gracias por su preferencia!"     'Mensaje de fin de ticket : "Gracias por su preferencia"
+    Private _Total As String = "445.00"                             'Total dela venta
+    Private _Correo As String = "plasticos_y_derivados@hotmail.com" 'Correo de la empresa
+    Private _Cambio As String = "5.50"                              'Cambio de la venta
+    Private _Efectivo As String = "500.00"                          'Efectivo con el que se pagó
+
+#End Region
+#Region "Declaraciones de Funcionamiento de Impresión"
+    '***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO *****
+    Private WithEvents PD As New PrintDocument                      'Documento a imprimir
+    Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
     Private _Art As Integer = 0                                     'Indice de la columna articulo en el DataGridView
     Private _Cant As Integer = 1                                    'Indice de la columna cantidad en el DataGridView
     Private _Sub As Integer = 2                                     'Indice de la columna subtotal en el DataGridView
-    Private _Total As String = "0.00"                               'Total dela venta
-    Private _Correo As String = "plasticos_y_derivados@hotmail.com" 'Correo de la empresa
-    Private _Cambio As String = "0.00"                              'Cambio de la venta
-    Private _efectivo As String = "0.00"                            'Efectivo con el que se pagó
-
+    Private _Impresora As String = "POS58"                          'Nombre de la impresora
+    Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
+    Private _AnchoHoja As Decimal = 194                             'Ancho de la hoja de impresión
+    Private _Espacio As Decimal = 15                                'Espacio entre lineas
+    Private _X As Integer = 0                                       'Posición X en la impresión
+    Private _Y As Integer = 0                                       'Posición Y en la impresión
+    Dim AreaImpresion As Rectangle                                  'Area de impresión
+    Dim F_Titulo As New Font("Arial", 14, FontStyle.Bold)           'Fuente de Titulo
+    Dim F_Encabezado As New Font("Arial", 9, FontStyle.Regular)     'Fuente de encabezado
+    Dim F_Cuerpo As New Font("Arial", 8, FontStyle.Regular)         'Fuente de cuerpo
+    Dim F_Columna As New Font("Arial", 8, FontStyle.Bold)           'Fuente de columna
+    Dim aCenter As New StringFormat()                               'Centra el texto
+    Dim aLeft As New StringFormat()                                 'Alineación a la izquierda
+    Dim aRight As New StringFormat()                                'Alineación a la derecha
 #End Region
-#Region "Declaraciones de Funcionamiento"
-    '***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO *****
-    Private WithEvents PrintDocument1 As PrintDocument
-    Private ImagenPrint As Boolean
 
-    '*************************************
-    Private Const eClear As String = Chr(27) + "@"
-    Private Const eCentre As String = Chr(27) + Chr(97) + "1"
-    Private Const eLeft As String = Chr(27) + Chr(97) + "0"
-    Private Const eRight As String = Chr(27) + Chr(97) + "2"
-    Private Const eDrawer As String = eClear + Chr(27) + "p" + Chr(0) + ".}"
-    Private Const eCut As String = Chr(27) + "i" + vbCrLf
-    Private Const eSmlText As String = Chr(27) + "!" + Chr(1)
-    Private Const eNmlText As String = Chr(27) + "!" + Chr(0)
-    Private Const eInit As String = eNmlText + Chr(13) + Chr(27) + _
-    "c6" + Chr(1) + Chr(27) + "R3" + vbCrLf
-    Private Const eBigCharOn As String = Chr(27) + "!" + Chr(56)
-    Private Const eBigCharOff As String = Chr(27) + "!" + Chr(0)
+    'Contructor de clase
+    Public Sub New()
+        aCenter.Alignment = StringAlignment.Center
+        aCenter.LineAlignment = StringAlignment.Center
+        aLeft.Alignment = StringAlignment.Near
+        aLeft.LineAlignment = StringAlignment.Center
+        aRight.Alignment = StringAlignment.Far
+        aRight.LineAlignment = StringAlignment.Center
+    End Sub
 
-    Private hPrinter As New IntPtr(0)
-    Private di As New DOCINFOA()
-    Private PrinterOpen As Boolean = False
-    '*************************************
-#End Region
+
 #Region "Propiedades"
     ''' <summary>
     ''' Efectivo con el cual está pagando el cliente
@@ -64,10 +68,38 @@ Public Class cTicket
     ''' <remarks></remarks>
     Public Property Efectivo As String
         Get
-            Return _efectivo
+            Return _Efectivo
         End Get
         Set(value As String)
-            _efectivo = value
+            _Efectivo = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Espacio entre lineas
+    ''' </summary>
+    ''' <value>Decimal</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Espacio As String
+        Get
+            Return _Espacio
+        End Get
+        Set(value As String)
+            _Espacio = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Ancho de la hoja de impresión en puntos
+    ''' </summary>
+    ''' <value>Decimal</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Ancho_Hoja As String
+        Get
+            Return _AnchoHoja
+        End Get
+        Set(value As String)
+            _AnchoHoja = value
         End Set
     End Property
     ''' <summary>
@@ -314,19 +346,10 @@ Public Class cTicket
     ''' <summary>
     ''' Imprime ticket
     ''' </summary>
-    ''' <returns>Boolean</returns>
     ''' <remarks></remarks>
-    Public Function ImprimirTicket() As Boolean
-        If StartPrint() Then
-            PrintHeader()
-            Imprimir_Cuerpo()
-            PrintFooter()
-            EndPrint()
-            Return True
-        Else
-            Return False
-        End If
-    End Function
+    Public Sub ImprimirTicket()
+        Imprimir()
+    End Sub
     ''' <summary>
     ''' Convierte un número a texto especificando los pesos y centavos
     ''' </summary>
@@ -347,16 +370,6 @@ Public Class cTicket
 #End Region
 #Region "Funciones privadas"
 #Region "Funciones generales"
-    Private Function Imprimir_Cuerpo() As Boolean
-        If _Tabla.RowCount > 0 Then
-
-            Return True
-        Else
-            Return False
-        End If
-    End Function
-
-
     ''' <summary>
     ''' Recibe como parametro un numero y devuelve el numero expresado en cadena
     ''' </summary>
@@ -410,7 +423,6 @@ Public Class cTicket
 
         Return Cd
     End Function
-
     Private Function Numero(ByVal Num As Integer) As String
         Select Case Num
             Case 1
@@ -490,199 +502,93 @@ Public Class cTicket
         End Select
         Return ""
     End Function
-    Private Function Imprimir_Imagen(ByVal Ima As Boolean) As Boolean
-        Dim Imagen_item As Image
-        ImagenPrint = Ima
-        If Ima Then
-            Imagen_item = _Logotipo
+    Private Function DistribuirCadenas(ByVal Cadena1 As String, ByVal Cadena2 As String, ByVal Cadena3 As String) As String
+        Dim C1L As Integer
+        Dim C2L As Integer
+        Dim i As Integer = 1
+        Dim Aux1 As String = ""
+
+        C2L = Cadena3.Length
+        C1L = Cadena1.Length
+        If C1L > 20 Then
+            Cadena1 = Cadena1.Substring(0, 20) + " "
         Else
-            Imagen_item = _Barcode_Ima
+            Cadena1 = Cadena1 + "                    "
+            Cadena1 = Cadena1.Substring(0, 21)
         End If
 
+        C1L = Cadena2.Length
+        If C1L = 1 Then
+            Cadena2 = " " + Cadena2
+            C1L = Cadena2.Length
+        End If
+
+        If (C1L + C2L) < 12 Then
+            For i = 1 To (11 - (C1L + C2L))
+                Aux1 = Aux1 + " "
+            Next
+            Cadena3 = Aux1 + Cadena3
+        End If
+        Cadena1 = Cadena1 + Cadena2 + Cadena3
+        Return Cadena1
+    End Function
+#End Region
+#Region "Operaciones basicas con la impresora"
+    Private Function Imprimir() As Boolean
         Try
-            PrintDocument1 = New PrintDocument
-            PrintDocument1.PrinterSettings.PrinterName = _Impresora
-            PrintDocument1.PrintController = New StandardPrintController
-            If PrintDocument1.PrinterSettings.IsValid Then
-                PrintDocument1.DocumentName = "Ticket"
-                PrintDocument1.Print()
+            PD.PrinterSettings.PrinterName = _Impresora
+            PD.PrintController = New StandardPrintController
+            If PD.PrinterSettings.IsValid Then
+                PD.DocumentName = "Ticket"
+                PD.Print()
+            Else
+                Return False
             End If
             Return True
         Catch ex As Exception
-            MsgBox("Error al intentar imprimir imágen : " + ex.ToString, vbCritical)
+            MsgBox("¡Error al intentar imprimir!: " + ex.ToString, vbCritical)
             Return False
         End Try
     End Function
-    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PrintDocument1.PrintPage
-        If ImagenPrint Then
-            e.Graphics.DrawImage(_Logotipo, 0, 0)
+    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PD.PrintPage
+        StartPrint(e)
+
+
+        Print_(_Empresa)
+
+
+        e = EndPrint()
+    End Sub
+    ''' <summary>
+    ''' Agrega una linea al documento
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub Print_(ByVal Texto As String)
+        If Not IsNothing(PDBody) Then
+            AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, 22)
+            PDBody.Graphics.DrawString(Texto, F_Cuerpo, Brushes.Black, AreaImpresion, aCenter)
         Else
-            e.Graphics.DrawImage(_Barcode_Ima, 60, 0)
+            MsgBox("¡No se ha indicado el inicio de documento al crear el Ticket!", vbOKOnly + vbExclamation, "Ticket")
         End If
+    End Sub
+    ''' <summary>
+    ''' Indica el termino de un impresión
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function EndPrint() As PrintPageEventArgs
+        PDBody.HasMorePages = False
+        Return PDBody
+    End Function
+    ''' <summary>
+    ''' Indica el inicio de la creación de un documento
+    ''' </summary>
+    ''' <param name="e">PrintPageEventArgs</param>
+    ''' <remarks></remarks>
+    Private Sub StartPrint(ByVal e As PrintPageEventArgs)
+        PDBody = Nothing
+        PDBody = e
     End Sub
 #End Region
-#Region "Operaciones basicas con la impresora"
-    Private Function StartPrint() As Boolean
-        Return OpenPrint(_Impresora)
-    End Function
-
-    Private Sub PrintHeader()
-        'eInit Espacio en blanco
-        If Not IsNothing(_Logotipo) Then
-            Imprimir_Imagen(True)
-        End If
-        Print(eCentre)
-        If Not _Empresa = "" Then
-            Print(_Empresa)
-        End If
-        If Not _Calle = "" Then
-            Print(_Calle + " C.P. " + _CP)
-        End If
-        If Not _Colonia = "" Then
-            Print(_Colonia)
-        End If
-        If Not _Ciudad = "" Then
-            Print(_Ciudad)
-        End If
-        If Not _Telefono = "" Then
-            Print(_Telefono)
-        End If
-        If Not _Correo = "" Then
-            Print("E-mail: " + _Correo)
-        End If
-        Print(eLeft)
-        PrintLinea()
-        '      (0,20)              (3,21)      
-        Print("Articulo             Cant.  SubT")
-    End Sub
-
-    Private Sub PrintFooter()
-        Print(eRight + "Total: $" + _Total)
-        PrintLinea()
-        Print(NumeroToTexto(eCentre + _Total) + " 00/100 M.N.")
-        Print(eLeft + "Efectivo: $" + _efectivo + eRight + "Cambio: $" + _Cambio)
-        If Not IsNothing(_Barcode_Ima) Then
-            Imprimir_Imagen(False)
-            Print(eCentre + _BarCode_Text)
-        End If
-
-        If Not _Mensaje = "" Then
-            Print(eCentre + _Mensaje + eLeft)
-        End If
-        Print(vbLf + vbCrLf + eCut + eDrawer)
-    End Sub
-
-    Private Sub Print(Line As String)
-        SendStringToPrinter(_Impresora, Line + vbLf)
-    End Sub
-    Private Sub PrintLinea()
-        Print(eInit + "- - - - - - - - - - - - - - - -" + eInit)
-    End Sub
-    Private Sub EndPrint()
-        ClosePrint()
-    End Sub
-#End Region
-
-#End Region
-#Region "RawPrinterHelper"
-    ' Structure and API declarations:
-    <StructLayout(LayoutKind.Sequential, CharSet:=CharSet.Ansi)> _
-    Private Class DOCINFOA
-        <MarshalAs(UnmanagedType.LPStr)> _
-        Public pDocName As String
-        <MarshalAs(UnmanagedType.LPStr)> _
-        Public pOutputFile As String
-        <MarshalAs(UnmanagedType.LPStr)> _
-        Public pDataType As String
-    End Class
-
-    <DllImport("winspool.Drv", EntryPoint:="OpenPrinterA", _
-    SetLastError:=True, CharSet:=CharSet.Ansi, ExactSpelling:=True, _
-    CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function OpenPrinter(<MarshalAs(UnmanagedType.LPStr)> _
-    szPrinter As String, ByRef hPrinter As IntPtr, pd As IntPtr) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="ClosePrinter", _
-    SetLastError:=True, ExactSpelling:=True, CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function ClosePrinter(hPrinter As IntPtr) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="StartDocPrinterA", _
-    SetLastError:=True, CharSet:=CharSet.Ansi, ExactSpelling:=True, _
-    CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function StartDocPrinter(hPrinter As IntPtr, level As Int32, _
-    <[In](), MarshalAs(UnmanagedType.LPStruct)> di As DOCINFOA) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="EndDocPrinter", _
-    SetLastError:=True, ExactSpelling:=True, CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function EndDocPrinter(hPrinter As IntPtr) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="StartPagePrinter", _
-    SetLastError:=True, ExactSpelling:=True, CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function StartPagePrinter(hPrinter As IntPtr) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="EndPagePrinter", _
-    SetLastError:=True, ExactSpelling:=True, CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function EndPagePrinter(hPrinter As IntPtr) As Boolean
-    End Function
-
-    <DllImport("winspool.Drv", EntryPoint:="WritePrinter", _
-    SetLastError:=True, ExactSpelling:=True, CallingConvention:=CallingConvention.StdCall)> _
-    Private Shared Function WritePrinter(hPrinter As IntPtr, pBytes As IntPtr, _
-    dwCount As Int32, ByRef dwWritten As Int32) As Boolean
-    End Function
-
-    Private ReadOnly Property PrinterIsOpen As Boolean
-        Get
-            PrinterIsOpen = PrinterOpen
-        End Get
-    End Property
-
-    Private Function OpenPrint(szPrinterName As String) As Boolean
-        If PrinterOpen = False Then
-            di.pDocName = ".NET RAW Document"
-            di.pDataType = "RAW"
-
-            If OpenPrinter(szPrinterName.Normalize(), hPrinter, IntPtr.Zero) Then
-                ' Start a document.
-                If StartDocPrinter(hPrinter, 1, di) Then
-                    If StartPagePrinter(hPrinter) Then
-                        PrinterOpen = True
-                    Else
-                        PrinterOpen = False
-                    End If
-                End If
-            End If
-        End If
-
-        OpenPrint = PrinterOpen
-    End Function
-
-    Private Sub ClosePrint()
-        If PrinterOpen Then
-            EndPagePrinter(hPrinter)
-            EndDocPrinter(hPrinter)
-            ClosePrinter(hPrinter)
-            PrinterOpen = False
-        End If
-    End Sub
-
-    Private Function SendStringToPrinter(szPrinterName As String, szString As String) As Boolean
-        If PrinterOpen Then
-            Dim pBytes As IntPtr
-            Dim dwCount As Int32
-            Dim dwWritten As Int32 = 0
-            dwCount = szString.Length
-            pBytes = Marshal.StringToCoTaskMemAnsi(szString)
-            SendStringToPrinter = WritePrinter(hPrinter, pBytes, dwCount, dwWritten)
-            Marshal.FreeCoTaskMem(pBytes)
-        Else
-            SendStringToPrinter = False
-        End If
-    End Function
 #End Region
 End Class
