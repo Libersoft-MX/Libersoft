@@ -9,7 +9,7 @@ Public Class cTicket
     '***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET *****************
 
     Private _Logotipo As Image = Nothing                            'Logotipo de la empresa         ID ->1
-    Private _Empresa As String = "Aceros Inoxidablestyzxc Refacciones y Equipos" 'Nombre de la empresa
+    Private _Empresa As String = "Aceros Inoxidables Refacciones y Equipos" 'Nombre de la empresa
     Private _Calle As String = "Calle Lino Merino #226"             'Nombre de la calle donde esta ubicada
     Private _Colonia As String = "Colonia Centro"                   'Nombre de la colonia
     Private _Ciudad As String = "Villahermosa Tab. Mex."            'Nombre del ciudad
@@ -34,28 +34,30 @@ Public Class cTicket
     Private _Sub As Integer = 2                                     'Indice de la columna subtotal en el DataGridView
     Private _Impresora As String = "POS58"                          'Nombre de la impresora
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
-    Private _AnchoHoja As Decimal = 194                             'Ancho de la hoja de impresión
-    Private _Espacio As Decimal = 15                                'Espacio entre lineas
+    Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
+    Private _Espacio As Decimal = 5                                 'Espacio entre lineas
     Private _X As Integer = 0                                       'Posición X en la impresión
     Private _Y As Integer = 0                                       'Posición Y en la impresión
-    Dim AreaImpresion As Rectangle                                  'Area de impresión
-    Dim F_Titulo As New Font("Arial", 14, FontStyle.Bold)           'Fuente de Titulo
-    Dim F_Encabezado As New Font("Arial", 9, FontStyle.Regular)     'Fuente de encabezado
-    Dim F_Cuerpo As New Font("Arial", 8, FontStyle.Regular)         'Fuente de cuerpo
-    Dim F_Columna As New Font("Arial", 8, FontStyle.Bold)           'Fuente de columna
-    Dim aCenter As New StringFormat()                               'Centra el texto
-    Dim aLeft As New StringFormat()                                 'Alineación a la izquierda
-    Dim aRight As New StringFormat()                                'Alineación a la derecha
+    Private AreaImpresion As Rectangle                              'Area de impresión
+    Private Titulo_F As New Font("Arial", 12, FontStyle.Bold)       'Fuente de Titulo
+    Private Encabezado_F As New Font("Arial", 9, FontStyle.Regular) 'Fuente de encabezado
+    Private Cuerpo_F As New Font("Arial", 8, FontStyle.Regular)     'Fuente de cuerpo
+    Private Columna_F As New Font("Arial", 8, FontStyle.Bold)       'Fuente de columna
+    Private eCenter As New StringFormat()                           'Centra el texto
+    Private eLeft As New StringFormat()                             'Alineación a la izquierda
+    Private eRight As New StringFormat()                            'Alineación a la derecha
+    Private _Aling As StringFormat                                  'Auxiliar para alineación
+    Private _PrintView As New PrintPreviewDialog
 #End Region
 
     'Contructor de clase
     Public Sub New()
-        aCenter.Alignment = StringAlignment.Center
-        aCenter.LineAlignment = StringAlignment.Center
-        aLeft.Alignment = StringAlignment.Near
-        aLeft.LineAlignment = StringAlignment.Center
-        aRight.Alignment = StringAlignment.Far
-        aRight.LineAlignment = StringAlignment.Center
+        eCenter.Alignment = StringAlignment.Center
+        eCenter.LineAlignment = StringAlignment.Center
+        eLeft.Alignment = StringAlignment.Near
+        eLeft.LineAlignment = StringAlignment.Center
+        eRight.Alignment = StringAlignment.Far
+        eRight.LineAlignment = StringAlignment.Center
     End Sub
 
 
@@ -234,7 +236,7 @@ Public Class cTicket
     ''' <value>Image</value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Property Logo As Image
+    Public Property Logotipo As Image
         Get
             Return _Logotipo
         End Get
@@ -536,11 +538,16 @@ Public Class cTicket
 #Region "Operaciones basicas con la impresora"
     Private Function Imprimir() As Boolean
         Try
-            PD.PrinterSettings.PrinterName = _Impresora
-            PD.PrintController = New StandardPrintController
             If PD.PrinterSettings.IsValid Then
                 PD.DocumentName = "Ticket"
-                PD.Print()
+                PD.PrinterSettings.PrinterName = _Impresora
+                PD.PrintController = New StandardPrintController
+
+                AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
+
+                _PrintView.Document = PD
+                _PrintView.Show()
+                'PD.Print()
             Else
                 Return False
             End If
@@ -550,26 +557,136 @@ Public Class cTicket
             Return False
         End Try
     End Function
-    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PD.PrintPage
+    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)
         StartPrint(e)
 
-
-        Print_(_Empresa)
-
-
+        PrintImage(_Logotipo)
+        PrintText(_Calle, Encabezado_F)
+        PrintText(_Colonia + " C.P. " + _CP, Encabezado_F)
+        PrintText(_Ciudad, Encabezado_F)
+        PrintText("Tel. " + _Telefono, Encabezado_F)
+        PrintText("E-mail: " + _Correo, Cuerpo_F)
+        eSpace(2)
+        PrintBody()
+        PrintText(NumeroToTexto(_Total), Cuerpo_F)
+        eSpace(2)
+        PrintText("Efectivo: $" + Format((_Efectivo * 1), "##,##0.00"), Columna_F)
+        PrintText("Cambio: $" + Format((_Efectivo - _Total), "##,##0.00"), Columna_F)
+        eSpace(2)
+        PrintImage(_Barcode_Ima)
+        PrintText(_BarCode_Text, Columna_F)
+        eSpace(2)
+        PrintText(_Mensaje, Columna_F)
+        eSpace(6)
+        PrintText(".", Cuerpo_F)
         e = EndPrint()
     End Sub
+    Private Sub PrintBody()
+        Dim X1 As Integer
+        Dim X2 As Integer
+        Dim X3 As Integer
+        Dim W1 As Integer
+        Dim W2 As Integer
+        Dim W3 As Integer
+        Dim TF As Decimal
+        Dim Lineas As Integer
+        Dim Total_ As Decimal = 0
+        If Not IsNothing(_Tabla) Then
+            Lineas = _Tabla.RowCount
+            TF = Cuerpo_F.GetHeight(PDBody.Graphics)
+            W3 = PDBody.Graphics.MeasureString("88000.00", Cuerpo_F).Width
+            W2 = PDBody.Graphics.MeasureString("500", Cuerpo_F).Width
+            W1 = _AnchoHoja - (W2 + W3 + 10)
+            X1 = 0
+            X2 = W1 + 5
+            X3 = X2 + W2
+
+            eLine()
+            AreaImpresion = New Rectangle(X1, _Y, W1, TF)
+            PDBody.Graphics.DrawString("Articulo:", Columna_F, Brushes.Black, AreaImpresion, eLeft)
+            AreaImpresion = New Rectangle(X2, _Y, W2, TF)
+            PDBody.Graphics.DrawString("Cant.", Columna_F, Brushes.Black, AreaImpresion, eCenter)
+            AreaImpresion = New Rectangle(X3, _Y, W3, TF)
+            PDBody.Graphics.DrawString("SubT", Columna_F, Brushes.Black, AreaImpresion, eLeft)
+            _Y += 10
+            eLine()
+
+            For i As Integer = 0 To Lineas - 1
+                _Y += TF
+                AreaImpresion = New Rectangle(X1, _Y, W1, TF)
+                PDBody.Graphics.DrawString(_Tabla.Item(0, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
+                AreaImpresion = New Rectangle(X2, _Y, W2, TF)
+                PDBody.Graphics.DrawString(_Tabla.Item(1, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eCenter)
+                AreaImpresion = New Rectangle(X3, _Y, W3, TF)
+                PDBody.Graphics.DrawString(_Tabla.Item(2, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
+                Total_ += _Tabla.Item(2, i).Value
+            Next
+            _Total = Format((Total_ * 1), "##,##0.00")
+            _Y += TF
+            AreaImpresion = New Rectangle(X2 - 20, _Y, _AnchoHoja - (X2 - 20), Columna_F.GetHeight(PDBody.Graphics))
+            PDBody.Graphics.DrawString("Total: $" + _Total, Columna_F, Brushes.Black, AreaImpresion, eLeft)
+
+            _Y += Columna_F.GetHeight(PDBody.Graphics) + 10
+            eLine()
+
+        End If
+
+
+    End Sub
     ''' <summary>
-    ''' Agrega una linea al documento
+    ''' Agrega una linea al documento. Alineación: 0-> Izquierda; 1->Centro; 2-> Derecha
     ''' </summary>
+    ''' <param name="Texto">Texto a imprimir</param>
+    ''' <param name="Fuente_F">Titulo; Encabezado; Cuerpo; Columna</param>
+    ''' <param name="Alineacion">Alineación: 0-> Izquierda; 1->Centro; 2-> Derecha</param>
     ''' <remarks></remarks>
-    Private Sub Print_(ByVal Texto As String)
+    Private Sub PrintText(ByVal Texto As String, ByVal Fuente_F As Font, Optional ByVal Alineacion As Integer = 1)
+        Dim TFuente As Decimal = 12
         If Not IsNothing(PDBody) Then
-            AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, 22)
-            PDBody.Graphics.DrawString(Texto, F_Cuerpo, Brushes.Black, AreaImpresion, aCenter)
+            Select Case Alineacion
+                Case 0
+                    _Aling = eLeft
+                Case 1
+                    _Aling = eCenter
+                Case 2
+                    _Aling = eRight
+                Case Else
+                    _Aling = eCenter
+            End Select
+            TFuente = PDBody.Graphics.MeasureString(Texto, Fuente_F).Height
+            If PDBody.Graphics.MeasureString(Texto, Fuente_F).Width > Ancho_Hoja Then
+                If (PDBody.Graphics.MeasureString(Texto, Fuente_F).Width / _AnchoHoja) Mod 1 Then
+                    TFuente = TFuente * (Fix((PDBody.Graphics.MeasureString(Texto, Fuente_F).Width / _AnchoHoja) + 1))
+                Else
+                    TFuente = TFuente * (PDBody.Graphics.MeasureString(Texto, Fuente_F).Width / _AnchoHoja)
+                End If
+            Else
+                Fuente_F.GetHeight(PDBody.Graphics)
+            End If
+            AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, TFuente)
+            PDBody.Graphics.DrawString(Texto, Fuente_F, Brushes.Black, AreaImpresion, _Aling)
+            _Y = _Y + TFuente
         Else
             MsgBox("¡No se ha indicado el inicio de documento al crear el Ticket!", vbOKOnly + vbExclamation, "Ticket")
         End If
+    End Sub
+
+    Private Sub PrintImage(ByVal Imagen As Image)
+        Dim ImagenW As Integer
+        Dim ImagenH As Integer
+        Dim XPos As Integer
+
+        ImagenH = Imagen.Height
+        ImagenW = Imagen.Width
+        If _AnchoHoja > ImagenW Then
+            XPos = (_AnchoHoja - ImagenW) \ 2
+        Else
+            XPos = 0
+        End If
+        AreaImpresion = New Rectangle(XPos, _Y, ImagenW, ImagenH)
+        PDBody.Graphics.DrawImage(Imagen, AreaImpresion)
+        _Y = _Y + ImagenH
+
     End Sub
     ''' <summary>
     ''' Indica el termino de un impresión
@@ -580,6 +697,25 @@ Public Class cTicket
         PDBody.HasMorePages = False
         Return PDBody
     End Function
+    Private Sub eSpace(Optional ByVal num As Integer = 1)
+        Dim Fuente_F As New Font("Arial", 10, FontStyle.Regular)
+        Dim TFuente As Decimal
+        'Dim Texto As String = "- - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+
+        TFuente = Fuente_F.GetHeight(PDBody.Graphics)
+        AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, _Espacio * num)
+        PDBody.Graphics.DrawRectangle(Pens.White, AreaImpresion)
+        _Y = _Y + (num * _Espacio)
+    End Sub
+    Private Sub eLine()
+        Dim Fuente_F As New Font("Arial", 10, FontStyle.Regular)
+        Dim TFuente As Decimal
+        Dim Texto As String = "- - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+        TFuente = Fuente_F.GetHeight(PDBody.Graphics)
+        AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, TFuente)
+        PDBody.Graphics.DrawString(Texto, Fuente_F, Brushes.Black, AreaImpresion, _Aling)
+        _Y = _Y + TFuente
+    End Sub
     ''' <summary>
     ''' Indica el inicio de la creación de un documento
     ''' </summary>
