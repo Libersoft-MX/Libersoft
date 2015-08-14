@@ -23,16 +23,22 @@ Public Class cTicket
     Private _Correo As String = "plasticos_y_derivados@hotmail.com" 'Correo de la empresa
     Private _Cambio As String = "5.50"                              'Cambio de la venta
     Private _Efectivo As String = "500.00"                          'Efectivo con el que se pagó
+    Private _Transaccion As String = "Operación"                    'Tipo de transacción que se está realizando
+    Private _Tipo_pago As String = "Efectivo"                       'Forma de pago: Efectivo, Cheque
+    Private _Fecha As String                                        'Fecha en que se registra la transacción
+    Private _Hora As String                                         'Hora en que se registra la transacción
 
 #End Region
 #Region "Declaraciones de Funcionamiento de Impresión"
     '***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO *****
     Private WithEvents PD As New PrintDocument                      'Documento a imprimir
     Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
-    Private _Art As Integer = 0                                     'Indice de la columna articulo en el DataGridView
-    Private _Cant As Integer = 1                                    'Indice de la columna cantidad en el DataGridView
-    Private _Sub As Integer = 2                                     'Indice de la columna subtotal en el DataGridView
+    Private _Art As String = "nombre_corto"                                    'Indice de la columna articulo en el DataGridView
+    Private _Cant As String = "cantidad"                                    'Indice de la columna cantidad en el DataGridView
+    Private _Sub As String = "subtotal"                                     'Indice de la columna subtotal en el DataGridView
+    Private _Precio As String = "precio"
     Private _Impresora As String = "POS58"                          'Nombre de la impresora
+    Private _Descuento As String = ""
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
     Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
     Private _Espacio As Decimal = 5                                 'Espacio entre lineas
@@ -62,6 +68,76 @@ Public Class cTicket
 
 
 #Region "Propiedades"
+    ''' <summary>
+    ''' Tipo de pago
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property TipoPago As String
+        Get
+            Return _Tipo_pago
+        End Get
+        Set(value As String)
+            _Tipo_pago = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Fecha en que se registra la transacción
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Fecha As String
+        Get
+            Return _Fecha
+        End Get
+        Set(value As String)
+            _Fecha = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Hora en que se registra la transacción
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Hora As String
+        Get
+            Return _Hora
+        End Get
+        Set(value As String)
+            _Hora = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Descuento total en la venta
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Descuento As String
+        Get
+            Return _Descuento
+        End Get
+        Set(value As String)
+            _Descuento = value
+        End Set
+    End Property
+    ''' <summary>
+    ''' Transacción que se está realizando: Venta, Cotización
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Transaccion As String
+        Get
+            Return _Transaccion
+        End Get
+        Set(value As String)
+            _Transaccion = value
+        End Set
+    End Property
     ''' <summary>
     ''' Efectivo con el cual está pagando el cliente
     ''' </summary>
@@ -545,9 +621,9 @@ Public Class cTicket
 
                 AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
 
-                _PrintView.Document = PD
-                _PrintView.Show()
-                'PD.Print()
+                '_PrintView.Document = PD
+                '_PrintView.Show()
+                PD.Print()
             Else
                 Return False
             End If
@@ -559,47 +635,94 @@ Public Class cTicket
     End Function
     Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)
         StartPrint(e)
-
-        PrintImage(_Logotipo)
-        PrintText(_Calle, Encabezado_F)
-        PrintText(_Colonia + " C.P. " + _CP, Encabezado_F)
-        PrintText(_Ciudad, Encabezado_F)
-        PrintText("Tel. " + _Telefono, Encabezado_F)
-        PrintText("E-mail: " + _Correo, Cuerpo_F)
+        If Not IsNothing(_Logotipo) Then
+            PrintImage(_Logotipo)
+        End If
+        If Not _Calle = "" Then
+            PrintText(_Calle, Encabezado_F)
+        End If
+        If Not _Colonia = "" Then
+            PrintText(_Colonia + " C.P. " + _CP, Encabezado_F)
+        End If
+        If Not _Ciudad = "" Then
+            PrintText(_Ciudad, Encabezado_F)
+        End If
+        If Not _Telefono = "" Then
+            PrintText("Tel. " + _Telefono, Encabezado_F)
+        End If
+        If Not _Correo = "" Then
+            PrintText("E-mail: " + _Correo, Cuerpo_F)
+        End If
+        If Not _Correo = "" Then
+            PrintText("Fecha: " + Format(CDate(_Fecha), "dd/MM/yyyy").ToString, Cuerpo_F)
+        End If
+        If Not _Correo = "" Then
+            PrintText("Hora: " + Format(CDate(_Hora), "hh:mm tt").ToString, Cuerpo_F)
+        End If
         eSpace(2)
+        If Not IsNothing(_Barcode_Ima) And Not _Transaccion = "Cotización" Then
+            PrintText("Folio: " & _BarCode_Text, Columna_F)
+        End If
+        eSpace(2)
+        PrintText("Transacción: " + _Transaccion, Columna_F)
         PrintBody()
-        PrintText(NumeroToTexto(_Total), Cuerpo_F)
+        If Not _Total = "" Then
+            PrintText(NumeroToTexto(_Total), Cuerpo_F)
+        End If
         eSpace(2)
-        PrintText("Efectivo: $" + Format((_Efectivo * 1), "##,##0.00"), Columna_F)
-        PrintText("Cambio: $" + Format((_Efectivo - _Total), "##,##0.00"), Columna_F)
-        eSpace(2)
-        PrintImage(_Barcode_Ima)
-        PrintText(_BarCode_Text, Columna_F)
-        eSpace(2)
-        PrintText(_Mensaje, Columna_F)
+        If Not _Transaccion = "Cotización" Then
+            PrintText("Pago en " + _Tipo_pago + " una sola exibición", Columna_F)
+            eSpace(2)
+            If TipoPago = "Cheque" Then
+                PrintText("Cheque: $" + Format((_Efectivo * 1), "##,##0.00"), Columna_F)
+            Else
+                PrintText("Efectivo: $" + Format((_Efectivo * 1), "##,##0.00"), Columna_F)
+                PrintText("Cambio: $" + Format((_Efectivo - _Total), "##,##0.00"), Columna_F)
+            End If
+            
+            eSpace(2)
+        End If
+
+        'If Not _Descuento = "" And Not -Descuento = "0" Then
+        '  PrintText("Con el descuento aplicado has ahorrado $" + _Descuento, Columna_F)
+        '   eSpace(2)
+        'End If
+
+        If Not IsNothing(_Barcode_Ima) And Not _Transaccion = "Cotización" Then
+            PrintImage(_Barcode_Ima)
+            eSpace(2)
+        End If
+        If Not _Mensaje = "" Then
+            PrintText(_Mensaje, Columna_F)
+        End If
         eSpace(6)
         PrintText(".", Cuerpo_F)
         e = EndPrint()
+        'PD.Dispose()
     End Sub
     Private Sub PrintBody()
         Dim X1 As Integer
         Dim X2 As Integer
         Dim X3 As Integer
+        Dim X4 As Integer
         Dim W1 As Integer
         Dim W2 As Integer
         Dim W3 As Integer
+        Dim W4 As Integer
         Dim TF As Decimal
         Dim Lineas As Integer
         Dim Total_ As Decimal = 0
         If Not IsNothing(_Tabla) Then
             Lineas = _Tabla.RowCount
             TF = Cuerpo_F.GetHeight(PDBody.Graphics)
-            W3 = PDBody.Graphics.MeasureString("88000.00", Cuerpo_F).Width
+            W4 = PDBody.Graphics.MeasureString("88000", Cuerpo_F).Width
+            W3 = W4
             W2 = PDBody.Graphics.MeasureString("500", Cuerpo_F).Width
-            W1 = _AnchoHoja - (W2 + W3 + 10)
+            W1 = _AnchoHoja - (W4 + W2 + W3 + 10)
             X1 = 0
             X2 = W1 + 5
             X3 = X2 + W2
+            X4 = X3 + W3
 
             eLine()
             AreaImpresion = New Rectangle(X1, _Y, W1, TF)
@@ -607,19 +730,23 @@ Public Class cTicket
             AreaImpresion = New Rectangle(X2, _Y, W2, TF)
             PDBody.Graphics.DrawString("Cant.", Columna_F, Brushes.Black, AreaImpresion, eCenter)
             AreaImpresion = New Rectangle(X3, _Y, W3, TF)
+            PDBody.Graphics.DrawString("P.U.", Columna_F, Brushes.Black, AreaImpresion, eCenter)
+            AreaImpresion = New Rectangle(X4, _Y, W3, TF)
             PDBody.Graphics.DrawString("SubT", Columna_F, Brushes.Black, AreaImpresion, eLeft)
             _Y += 10
             eLine()
-
+            Total_ = 0
             For i As Integer = 0 To Lineas - 1
                 _Y += TF
                 AreaImpresion = New Rectangle(X1, _Y, W1, TF)
-                PDBody.Graphics.DrawString(_Tabla.Item(0, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
+                PDBody.Graphics.DrawString(_Tabla.Item(_Art, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
                 AreaImpresion = New Rectangle(X2, _Y, W2, TF)
-                PDBody.Graphics.DrawString(_Tabla.Item(1, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eCenter)
+                PDBody.Graphics.DrawString(_Tabla.Item(_Cant, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eCenter)
                 AreaImpresion = New Rectangle(X3, _Y, W3, TF)
-                PDBody.Graphics.DrawString(_Tabla.Item(2, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
-                Total_ += _Tabla.Item(2, i).Value
+                PDBody.Graphics.DrawString(_Tabla.Item(_Precio, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eCenter)
+                AreaImpresion = New Rectangle(X4, _Y, W4, TF)
+                PDBody.Graphics.DrawString(_Tabla.Item(_Sub, i).Value, Cuerpo_F, Brushes.Black, AreaImpresion, eLeft)
+                Total_ += _Tabla.Item(_Sub, i).Value
             Next
             _Total = Format((Total_ * 1), "##,##0.00")
             _Y += TF
@@ -722,7 +849,7 @@ Public Class cTicket
     ''' <param name="e">PrintPageEventArgs</param>
     ''' <remarks></remarks>
     Private Sub StartPrint(ByVal e As PrintPageEventArgs)
-        PDBody = Nothing
+        'PDBody = Nothing
         PDBody = e
     End Sub
 #End Region
