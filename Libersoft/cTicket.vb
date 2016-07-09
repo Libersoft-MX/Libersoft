@@ -33,11 +33,11 @@ Public Class cTicket
     '***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO *****
     Private WithEvents PD As New PrintDocument                      'Documento a imprimir
     Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
-    Private _Art As String = "nombre_corto"                                    'Indice de la columna articulo en el DataGridView
-    Private _Cant As String = "cantidad"                                    'Indice de la columna cantidad en el DataGridView
-    Private _Sub As String = "subtotal"                                     'Indice de la columna subtotal en el DataGridView
+    Private _Art As String = "nombre_corto"                         'Indice de la columna articulo en el DataGridView
+    Private _Cant As String = "cantidad"                            'Indice de la columna cantidad en el DataGridView
+    Private _Sub As String = "subtotal"                             'Indice de la columna subtotal en el DataGridView
     Private _Precio As String = "precio"
-    Private _Impresora As String = "POS58"                          'Nombre de la impresora
+    Private _Impresora As String = "POS-58"                         'Nombre de la impresora
     Private _Descuento As String = ""
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
     Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
@@ -93,7 +93,12 @@ Public Class cTicket
             Return _Fecha
         End Get
         Set(value As String)
-            _Fecha = value
+            If Not value = "" Then
+                _Fecha = value
+            Else
+                _Fecha = Format(CDate(Date.Today), "dd/MM/yyyy").ToString
+            End If
+
         End Set
     End Property
     ''' <summary>
@@ -107,7 +112,12 @@ Public Class cTicket
             Return _Hora
         End Get
         Set(value As String)
-            _Hora = value
+            If Not value = "" Then
+                _Hora = value
+            Else
+                _Hora = Format(CDate(Date.Today), "hh:mm tt")
+            End If
+
         End Set
     End Property
     ''' <summary>
