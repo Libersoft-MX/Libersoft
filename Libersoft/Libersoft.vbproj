@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="cBarCode.vb" />
+    <Compile Include="cImpresoraTickets.vb" />
     <Compile Include="cTicket.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
