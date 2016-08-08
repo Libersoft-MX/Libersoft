@@ -21,7 +21,6 @@ Public Class cImpresoraTickets
     Private WithEvents PD As PrintDocument                      'Documento a imprimir
     Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
     Private _Impresora As String = "POS-58"                         'Nombre de la impresora
-    Private _Descuento As String = ""
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
     Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
     Private _Espacio As Decimal = 5                                 'Espacio entre lineas
@@ -377,7 +376,7 @@ Public Class cImpresoraTickets
 #End Region
 #Region "Operaciones basicas con la impresora"
     Private Function Imprimir() As Boolean
-        pd As New PrintDocument
+        'pd As New PrintDocument
         Try
             If PD.PrinterSettings.IsValid Then
                 PD.DocumentName = "Ticket"
