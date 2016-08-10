@@ -14,11 +14,12 @@ Public Class cImpresoraTickets
     Private _Tabla As DataGridView = Nothing                        'Número del codigo de barra
     Private _Fecha As String                                        'Fecha en que se registra la transacción
     Private _Hora As String                                         'Hora en que se registra la transacción
+    Private Texto As String
 
 #End Region
 #Region "Declaraciones de Funcionamiento de Impresión"
     '***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO ***** FUNCIONAMIENTO *****
-    Private WithEvents PD As PrintDocument                      'Documento a imprimir
+    Private WithEvents PD As New PrintDocument                      'Documento a imprimir
     Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
     Private _Impresora As String = "POS-58"                         'Nombre de la impresora
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
@@ -406,13 +407,31 @@ Public Class cImpresoraTickets
             Return False
         End Try
     End Function
-    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)
+    Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)   '*****************************************************
         StartPrint(e)
-        If Not IsNothing(_Logotipo) Then
+
+        If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
+            eSpace(3)
         End If
-        PrintText("Hola mundo", Titulo_F, 1)
-            eSpace(2)
+        'Texto = _Tabla(0, 1).Value.ToString
+
+        'PrintText(Texto, Titulo_F, 1)
+        'Dim Codigo As String
+        For Each row As DataGridViewRow In _Tabla.Rows
+            'obtenemos el valor de la columna en la variable declarada
+            PrintText(row.Cells(0).Value, Cuerpo_F, 2) 'donde (0) es la columna a recorrer
+            'MsgBox(Codigo) 'se mostrara un mensaje con el valor de cada una de las columnas
+
+        Next
+
+
+
+        'If Not IsNothing(_Logotipo) Then
+        'PrintImage(_Logotipo)
+        'End If
+        'PrintText("Hola mundo", Titulo_F, 1)
+        'eSpace(2)
 
 
         e = EndPrint()
@@ -461,14 +480,25 @@ Public Class cImpresoraTickets
         Dim ImagenW As Integer
         Dim ImagenH As Integer
         Dim XPos As Integer
+        Dim Alto As Integer
+        Dim aux As Integer
 
-        ImagenH = Imagen.Height
-        ImagenW = Imagen.Width
+        aux = 20
+
+        Alto = ((_AnchoHoja - aux) * Imagen.Height) / Imagen.Width
+        Dim imagen2 As New Bitmap(New Bitmap(Imagen), _AnchoHoja - aux, Alto)
+
+
+        ImagenH = imagen2.Height
+        ImagenW = imagen2.Width
         If _AnchoHoja > ImagenW Then
-            XPos = (_AnchoHoja - ImagenW) \ 2
+            XPos = 0 '((_AnchoHoja) - ImagenW) \ 2
         Else
             XPos = 0
         End If
+
+
+
         AreaImpresion = New Rectangle(XPos, _Y, ImagenW, ImagenH)
         PDBody.Graphics.DrawImage(Imagen, AreaImpresion)
         _Y = _Y + ImagenH
