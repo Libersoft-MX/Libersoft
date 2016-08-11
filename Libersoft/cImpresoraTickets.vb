@@ -25,18 +25,18 @@ Public Class cImpresoraTickets
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
     Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
     Private _Espacio As Decimal = 5                                 'Espacio entre lineas
-    Private _X As Integer = -3                                       'Posición X en la impresión
+    Private _X As Integer = 0                                       'Posición X en la impresión
     Private _Y As Integer = 0                                       'Posición Y en la impresión
     Private AreaImpresion As Rectangle                              'Area de impresión
     Private Titulo_F As New Font("Arial", 12, FontStyle.Bold)       'Fuente de Titulo
     Private Encabezado_F As New Font("Arial", 9, FontStyle.Regular) 'Fuente de encabezado
-    Private Cuerpo_F As New Font("Arial", 8, FontStyle.Regular)     'Fuente de cuerpo
+    Private Cuerpo_F As New Font("Arial", 12, FontStyle.Regular)     'Fuente de cuerpo
     Private Columna_F As New Font("Arial", 8, FontStyle.Bold)       'Fuente de columna
     Private eCenter As New StringFormat()                           'Centra el texto
     Private eLeft As New StringFormat()                             'Alineación a la izquierda
     Private eRight As New StringFormat()                            'Alineación a la derecha
     Private _Aling As StringFormat                                  'Auxiliar para alineación
-    'Private _PrintView As New PrintPreviewDialog
+    Private _PrintView As New PrintPreviewDialog
 #End Region
 
     'Contructor de clase
@@ -386,9 +386,9 @@ Public Class cImpresoraTickets
 
                 AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
 
-                '_PrintView.Document = PD
-                '_PrintView.Show()
-                PD.Print()
+                _PrintView.Document = PD
+                _PrintView.Show()
+                'PD.Print()
             Else
                 Return False
             End If
@@ -412,7 +412,7 @@ Public Class cImpresoraTickets
 
         If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
-            eSpace(3)
+            eSpace(6)
         End If
         'Texto = _Tabla(0, 1).Value.ToString
 
@@ -420,7 +420,10 @@ Public Class cImpresoraTickets
         'Dim Codigo As String
         For Each row As DataGridViewRow In _Tabla.Rows
             'obtenemos el valor de la columna en la variable declarada
-            PrintText(row.Cells(0).Value, Cuerpo_F, 2) 'donde (0) es la columna a recorrer
+            If row.Cells(0).Value = "1" Then
+                PrintText(row.Cells(0).Value, Titulo_F, 2) 'donde (0) es la columna a recorrer
+            End If
+
             'MsgBox(Codigo) 'se mostrara un mensaje con el valor de cada una de las columnas
 
         Next
