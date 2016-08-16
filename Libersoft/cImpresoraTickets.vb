@@ -23,15 +23,16 @@ Public Class cImpresoraTickets
     Private PDBody As PrintPageEventArgs = Nothing                  'Cuerpo del documento
     Private _Impresora As String = "POS-58"                         'Nombre de la impresora
     Private _ImagenPrint As Boolean = True                          'True imprime logotipo; false imprime código de barra
-    Private _AnchoHoja As Decimal = 195                             'Ancho de la hoja de impresión
+    Private _AnchoHoja As Decimal = 192                             'Ancho de la hoja de impresión
     Private _Espacio As Decimal = 5                                 'Espacio entre lineas
     Private _X As Integer = 0                                       'Posición X en la impresión
     Private _Y As Integer = 0                                       'Posición Y en la impresión
     Private AreaImpresion As Rectangle                              'Area de impresión
-    Private Titulo_F As New Font("Arial", 12, FontStyle.Bold)       'Fuente de Titulo
-    Private Encabezado_F As New Font("Arial", 9, FontStyle.Regular) 'Fuente de encabezado
-    Private Cuerpo_F As New Font("Arial", 12, FontStyle.Regular)     'Fuente de cuerpo
-    Private Columna_F As New Font("Arial", 8, FontStyle.Bold)       'Fuente de columna
+    Private fResta As New Font("Arial", 12, FontStyle.Strikeout)      'Fuente de Titulo
+    Private fResultado As New Font("Arial", 16, FontStyle.Bold)     'Fuente de encabezado
+    Private fSuma As New Font("Arial", 12, FontStyle.Regular)       'Fuente de cuerpo
+    Private fMultiplicacion As New Font("Arial", 12, FontStyle.Bold) 'Fuente de cuerpo
+    Private fDivision As New Font("Arial", 12, FontStyle.Underline) 'Fuente de cuerpo
     Private eCenter As New StringFormat()                           'Centra el texto
     Private eLeft As New StringFormat()                             'Alineación a la izquierda
     Private eRight As New StringFormat()                            'Alineación a la derecha
@@ -88,7 +89,7 @@ Public Class cImpresoraTickets
 
         End Set
     End Property
-    
+
     ''' <summary>
     ''' Espacio entre lineas
     ''' </summary>
@@ -117,7 +118,7 @@ Public Class cImpresoraTickets
             _AnchoHoja = value
         End Set
     End Property
-    
+
     ''' <summary>
     ''' Logotipo de la empresa
     ''' </summary>
@@ -386,9 +387,9 @@ Public Class cImpresoraTickets
 
                 AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
 
-                _PrintView.Document = PD
-                _PrintView.Show()
-                'PD.Print()
+                '_PrintView.Document = PD
+                '_PrintView.Show()
+                PD.Print()
             Else
                 Return False
             End If
@@ -412,7 +413,7 @@ Public Class cImpresoraTickets
 
         If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
-            eSpace(6)
+            eSpace(15)
         End If
         'Texto = _Tabla(0, 1).Value.ToString
 
@@ -420,9 +421,18 @@ Public Class cImpresoraTickets
         'Dim Codigo As String
         For Each row As DataGridViewRow In _Tabla.Rows
             'obtenemos el valor de la columna en la variable declarada
-            If row.Cells(0).Value = "1" Then
-                PrintText(row.Cells(0).Value, Titulo_F, 2) 'donde (0) es la columna a recorrer
-            End If
+            Select Case row.Cells(1).Value
+                Case "+"
+                    PrintText(row.Cells(0).Value, fSuma, 2)
+                Case "-"
+                    PrintText(row.Cells(0).Value, fResta, 2)
+                Case "x"
+                    PrintText(row.Cells(0).Value, fMultiplicacion, 2)
+                Case "/"
+                    PrintText(row.Cells(0).Value, fDivision, 2)
+                Case Else
+                    PrintText(row.Cells(0).Value, fResultado, 2)
+            End Select
 
             'MsgBox(Codigo) 'se mostrara un mensaje con el valor de cada una de las columnas
 
@@ -486,7 +496,7 @@ Public Class cImpresoraTickets
         Dim Alto As Integer
         Dim aux As Integer
 
-        aux = 20
+        aux = 0
 
         Alto = ((_AnchoHoja - aux) * Imagen.Height) / Imagen.Width
         Dim imagen2 As New Bitmap(New Bitmap(Imagen), _AnchoHoja - aux, Alto)
@@ -495,16 +505,16 @@ Public Class cImpresoraTickets
         ImagenH = imagen2.Height
         ImagenW = imagen2.Width
         If _AnchoHoja > ImagenW Then
-            XPos = 0 '((_AnchoHoja) - ImagenW) \ 2
+            XPos = (_AnchoHoja - imagen2.Width) \ 2
         Else
             XPos = 0
         End If
 
 
 
-        AreaImpresion = New Rectangle(XPos, _Y, ImagenW, ImagenH)
+        AreaImpresion = New Rectangle(XPos, _Y, imagen2.Width, imagen2.Height)
         PDBody.Graphics.DrawImage(Imagen, AreaImpresion)
-        _Y = _Y + ImagenH
+        _Y = _Y + imagen2.Height
 
     End Sub
     ''' <summary>
