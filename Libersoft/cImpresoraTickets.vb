@@ -14,7 +14,7 @@ Public Class cImpresoraTickets
     Private _Tabla As DataGridView = Nothing                        'Número del codigo de barra
     Private _Fecha As String = ""                                   'Fecha en que se registra la transacción
     Private _Hora As String = ""                                    'Hora en que se registra la transacción
-    Private Texto As String
+    Private _Empresa As String = ""
 
 #End Region
 #Region "Declaraciones de Funcionamiento de Impresión"
@@ -29,11 +29,13 @@ Public Class cImpresoraTickets
     Private _Y As Integer = 0                                       'Posición Y en la impresión
     Private AreaImpresion As Rectangle                              'Area de impresión
     Private fResta As New Font("Arial", 10, FontStyle.Strikeout)      'Fuente de Titulo
-    Private fResultado As New Font("Arial", 12, FontStyle.Bold)     'Fuente de encabezado
+    Private fResultado As New Font("Arial", 12, FontStyle.Regular)     'Fuente de encabezado
+    Private fEmpresa As New Font("Arial", 12, FontStyle.Bold)     'Fuente de encabezado
     Private fSuma As New Font("Arial", 10, FontStyle.Regular)       'Fuente de cuerpo
     Private fMultiplicacion As New Font("Arial", 10, FontStyle.Bold) 'Fuente de cuerpo
     Private fDivision As New Font("Arial", 10, FontStyle.Underline) 'Fuente de cuerpo
     Private fFecha As New Font("Arial", 10, FontStyle.Italic)       'Fuente de cuerpo
+    Private fPie As New Font("Arial", 5, FontStyle.Italic)       'Fuente de cuerpo
     Private eCenter As New StringFormat()                           'Centra el texto
     Private eLeft As New StringFormat()                             'Alineación a la izquierda
     Private eRight As New StringFormat()                            'Alineación a la derecha
@@ -52,6 +54,24 @@ Public Class cImpresoraTickets
     End Sub
 
 #Region "Propiedades"
+
+    ''' <summary>
+    ''' Fecha en que se registra la transacción
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Empresa As String
+        Get
+            Return _Empresa
+        End Get
+        Set(value As String)
+            If Not value = "" Then
+                _Empresa = value
+            End If
+
+        End Set
+    End Property
     ''' <summary>
     ''' Fecha en que se registra la transacción
     ''' </summary>
@@ -388,9 +408,9 @@ Public Class cImpresoraTickets
 
                 AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
 
-                '_PrintView.Document = PD
-                '_PrintView.Show()
-                PD.Print()
+                _PrintView.Document = PD
+                _PrintView.Show()
+                'PD.Print()
             Else
                 Return False
             End If
@@ -412,21 +432,17 @@ Public Class cImpresoraTickets
     Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)   '*****************************************************
         StartPrint(e)
         Dim aux As Boolean = False
-
+        eSpace(15)
         If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
             eSpace(5)
-            aux = True
         End If
 
         If Not _Fecha = "" Then
             PrintText(_Fecha, fFecha, 1)
-            aux = True
+            eSpace(5)
         End If
 
-        If aux Then
-            eSpace(8)
-        End If
         'Texto = _Tabla(0, 1).Value.ToString
 
         'PrintText(Texto, Titulo_F, 1)
@@ -452,13 +468,13 @@ Public Class cImpresoraTickets
 
 
 
-        'If Not IsNothing(_Logotipo) Then
-        'PrintImage(_Logotipo)
-        'End If
-        'PrintText("Hola mundo", Titulo_F, 1)
-        'eSpace(2)
+        If Not _Empresa = "" Then
+            'eSpace(3)
+            PrintText(_Empresa, fEmpresa, 1)
+        End If
 
-
+        eSpace(15)
+        PrintText(".", fPie, 2)
         e = EndPrint()
         'PD.Dispose()
     End Sub
@@ -507,11 +523,12 @@ Public Class cImpresoraTickets
         Dim XPos As Integer
         Dim Alto As Integer
         Dim aux As Integer
+        Dim AnchoDeseado As Integer
 
         aux = 0
-
-        Alto = ((_AnchoHoja - aux) * Imagen.Height) / Imagen.Width
-        Dim imagen2 As New Bitmap(New Bitmap(Imagen), _AnchoHoja - aux, Alto)
+        AnchoDeseado = 140
+        Alto = (AnchoDeseado * Imagen.Height) / Imagen.Width
+        Dim imagen2 As New Bitmap(New Bitmap(Imagen), AnchoDeseado, Alto)
 
 
         ImagenH = imagen2.Height
@@ -522,7 +539,7 @@ Public Class cImpresoraTickets
             XPos = 0
         End If
 
-
+        XPos = (Ancho_Hoja - AnchoDeseado) / 2
 
         AreaImpresion = New Rectangle(XPos, _Y, imagen2.Width, imagen2.Height)
         PDBody.Graphics.DrawImage(Imagen, AreaImpresion)
