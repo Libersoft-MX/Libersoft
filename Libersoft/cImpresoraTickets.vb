@@ -12,8 +12,8 @@ Public Class cImpresoraTickets
     Private _BarCode_Text As String = ""                            'Code 39
     Private _Barcode_Ima As Image = Nothing                         'Imagen del código de barra     ID ->0
     Private _Tabla As DataGridView = Nothing                        'Número del codigo de barra
-    Private _Fecha As String                                        'Fecha en que se registra la transacción
-    Private _Hora As String                                         'Hora en que se registra la transacción
+    Private _Fecha As String = ""                                   'Fecha en que se registra la transacción
+    Private _Hora As String = ""                                    'Hora en que se registra la transacción
     Private Texto As String
 
 #End Region
@@ -28,11 +28,12 @@ Public Class cImpresoraTickets
     Private _X As Integer = 0                                       'Posición X en la impresión
     Private _Y As Integer = 0                                       'Posición Y en la impresión
     Private AreaImpresion As Rectangle                              'Area de impresión
-    Private fResta As New Font("Arial", 12, FontStyle.Strikeout)      'Fuente de Titulo
-    Private fResultado As New Font("Arial", 16, FontStyle.Bold)     'Fuente de encabezado
-    Private fSuma As New Font("Arial", 12, FontStyle.Regular)       'Fuente de cuerpo
-    Private fMultiplicacion As New Font("Arial", 12, FontStyle.Bold) 'Fuente de cuerpo
-    Private fDivision As New Font("Arial", 12, FontStyle.Underline) 'Fuente de cuerpo
+    Private fResta As New Font("Arial", 10, FontStyle.Strikeout)      'Fuente de Titulo
+    Private fResultado As New Font("Arial", 12, FontStyle.Bold)     'Fuente de encabezado
+    Private fSuma As New Font("Arial", 10, FontStyle.Regular)       'Fuente de cuerpo
+    Private fMultiplicacion As New Font("Arial", 10, FontStyle.Bold) 'Fuente de cuerpo
+    Private fDivision As New Font("Arial", 10, FontStyle.Underline) 'Fuente de cuerpo
+    Private fFecha As New Font("Arial", 10, FontStyle.Italic)       'Fuente de cuerpo
     Private eCenter As New StringFormat()                           'Centra el texto
     Private eLeft As New StringFormat()                             'Alineación a la izquierda
     Private eRight As New StringFormat()                            'Alineación a la derecha
@@ -410,10 +411,21 @@ Public Class cImpresoraTickets
     End Function
     Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)   '*****************************************************
         StartPrint(e)
+        Dim aux As Boolean = False
 
         If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
-            eSpace(15)
+            eSpace(5)
+            aux = True
+        End If
+
+        If Not _Fecha = "" Then
+            PrintText(_Fecha, fFecha, 1)
+            aux = True
+        End If
+
+        If aux Then
+            eSpace(8)
         End If
         'Texto = _Tabla(0, 1).Value.ToString
 
