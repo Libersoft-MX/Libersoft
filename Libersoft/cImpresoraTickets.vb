@@ -15,6 +15,7 @@ Public Class cImpresoraTickets
     Private _Fecha As String = ""                                   'Fecha en que se registra la transacción
     Private _Hora As String = ""                                    'Hora en que se registra la transacción
     Private _Empresa As String = ""
+    Private _Operacion As String = ""
 
 #End Region
 #Region "Declaraciones de Funcionamiento de Impresión"
@@ -56,7 +57,24 @@ Public Class cImpresoraTickets
 #Region "Propiedades"
 
     ''' <summary>
-    ''' Fecha en que se registra la transacción
+    ''' Tipo de operación
+    ''' </summary>
+    ''' <value>String</value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Operacion As String
+        Get
+            Return _Operacion
+        End Get
+        Set(value As String)
+            If Not value = "" Then
+                _Operacion = value
+            End If
+
+        End Set
+    End Property
+    ''' <summary>
+    ''' Nombre de la empresa 
     ''' </summary>
     ''' <value>String</value>
     ''' <returns></returns>
@@ -449,18 +467,18 @@ Public Class cImpresoraTickets
         'Dim Codigo As String
         For Each row As DataGridViewRow In _Tabla.Rows
             'obtenemos el valor de la columna en la variable declarada
-            Select Case row.Cells(1).Value
-                Case "+"
-                    PrintText(row.Cells(0).Value, fSuma, 2)
-                Case "-"
-                    PrintText(row.Cells(0).Value, fResta, 2)
-                Case "x"
-                    PrintText(row.Cells(0).Value, fMultiplicacion, 2)
-                Case "/"
-                    PrintText(row.Cells(0).Value, fDivision, 2)
-                Case Else
-                    PrintText(row.Cells(0).Value, fResultado, 2)
-            End Select
+            'Select Case row.Cells(1).Value
+            '   Case "+"
+            PrintText(row.Cells(0).Value, fSuma, 2)
+            '   Case "-"
+            'PrintText(row.Cells(0).Value, fResta, 2)
+            '   Case "x"
+            'PrintText(row.Cells(0).Value, fMultiplicacion, 2)
+            '   Case "/"
+            'PrintText(row.Cells(0).Value, fDivision, 2)
+            '  Case Else
+            'PrintText(row.Cells(0).Value, fResultado, 2)
+            'End Select
 
             'MsgBox(Codigo) 'se mostrara un mensaje con el valor de cada una de las columnas
 
