@@ -33,7 +33,7 @@ Public Class cImpresoraTickets
     Private fResultado As New Font("Arial", 12, FontStyle.Regular)     'Fuente de encabezado
     Private fEmpresa As New Font("Arial", 12, FontStyle.Bold)     'Fuente de encabezado
     Private fSuma As New Font("Arial", 10, FontStyle.Regular)       'Fuente de cuerpo
-    Private fMultiplicacion As New Font("Arial", 10, FontStyle.Bold) 'Fuente de cuerpo
+    Private fMultiplicacion As New Font("Arial", 12, FontStyle.Bold) 'Fuente de cuerpo
     Private fDivision As New Font("Arial", 10, FontStyle.Underline) 'Fuente de cuerpo
     Private fFecha As New Font("Arial", 10, FontStyle.Italic)       'Fuente de cuerpo
     Private fPie As New Font("Arial", 5, FontStyle.Italic)       'Fuente de cuerpo
@@ -426,9 +426,9 @@ Public Class cImpresoraTickets
 
                 AddHandler PD.PrintPage, AddressOf PrintDocu_PrintPage
 
-                _PrintView.Document = PD
-                _PrintView.Show()
-                'PD.Print()
+                '_PrintView.Document = PD
+                '_PrintView.Show()
+                PD.Print()
             Else
                 Return False
             End If
@@ -448,9 +448,17 @@ Public Class cImpresoraTickets
         End Try
     End Function
     Private Sub PrintDocu_PrintPage(sender As Object, e As PrintPageEventArgs)   '*****************************************************
-        StartPrint(e)
+        Dim i As Integer
+        Dim Filas As Integer
         Dim aux As Boolean = False
+        StartPrint(e)
         eSpace(15)
+        Filas = Tabla.Rows.Count
+
+        If Tabla(0, Filas - 1).Value = "" Then
+            Filas -= 1
+        End If
+
         If _Logotipo IsNot Nothing Then
             PrintImage(_Logotipo)
             eSpace(5)
@@ -461,28 +469,24 @@ Public Class cImpresoraTickets
             eSpace(5)
         End If
 
-        'Texto = _Tabla(0, 1).Value.ToString
-
-        'PrintText(Texto, Titulo_F, 1)
-        'Dim Codigo As String
-        For Each row As DataGridViewRow In _Tabla.Rows
-            'obtenemos el valor de la columna en la variable declarada
-            'Select Case row.Cells(1).Value
-            '   Case "+"
-            PrintText(row.Cells(0).Value, fSuma, 2)
-            '   Case "-"
-            'PrintText(row.Cells(0).Value, fResta, 2)
-            '   Case "x"
-            'PrintText(row.Cells(0).Value, fMultiplicacion, 2)
-            '   Case "/"
-            'PrintText(row.Cells(0).Value, fDivision, 2)
-            '  Case Else
-            'PrintText(row.Cells(0).Value, fResultado, 2)
-            'End Select
-
-            'MsgBox(Codigo) 'se mostrara un mensaje con el valor de cada una de las columnas
-
+        'MsgBox(Tabla.Rows.Count)
+        PrintText(Tabla(0, 0).Value, fResultado, 2)
+        For i = 1 To Filas - 4
+            PrintText(Tabla(0, i).Value, fSuma, 2)
         Next
+        If Operacion = "*" Then
+            Operacion = "x"
+        End If
+        PrintTextFinal(Operacion, fMultiplicacion, Tabla(0, i).Value, fSuma, 2)
+        PrintText(Tabla(0, i + 1).Value, fMultiplicacion, 2)
+        PrintText(Tabla(0, i + 2).Value, fResultado, 2)
+
+
+        'MsgBox(i)
+
+        'For Each row As DataGridViewRow In _Tabla.Rows
+        'PrintText(row.Cells(0).Value, fSuma, 2)
+        'Next
 
 
 
@@ -504,6 +508,38 @@ Public Class cImpresoraTickets
     ''' <param name="Fuente_F">Titulo; Encabezado; Cuerpo; Columna</param>
     ''' <param name="Alineacion">Alineación: 0-> Izquierda; 1->Centro; 2-> Derecha</param>
     ''' <remarks></remarks>
+
+    Private Sub PrintTextFinal(ByVal Ope As String, ByVal Fuente_Ope As Font, ByVal Texto As String, ByVal Fuente_Texto As Font, Optional ByVal Alineacion As Integer = 1)
+        Dim TFuente As Decimal = 12
+        If Not IsNothing(PDBody) Then
+            Select Case Alineacion
+                Case 0
+                    _Aling = eLeft
+                Case 1
+                    _Aling = eCenter
+                Case 2
+                    _Aling = eRight
+                Case Else
+                    _Aling = eCenter
+            End Select
+            TFuente = PDBody.Graphics.MeasureString(Texto, Fuente_Texto).Height
+            If PDBody.Graphics.MeasureString(Texto, Fuente_Texto).Width > Ancho_Hoja Then
+                If (PDBody.Graphics.MeasureString(Texto, Fuente_Texto).Width / _AnchoHoja) Mod 1 Then
+                    TFuente = TFuente * (Fix((PDBody.Graphics.MeasureString(Texto, Fuente_Texto).Width / _AnchoHoja) + 1))
+                Else
+                    TFuente = TFuente * (PDBody.Graphics.MeasureString(Texto, Fuente_Texto).Width / _AnchoHoja)
+                End If
+            Else
+                Fuente_Texto.GetHeight(PDBody.Graphics)
+            End If
+            AreaImpresion = New Rectangle(_X, _Y, Ancho_Hoja, TFuente)
+            PDBody.Graphics.DrawString("     " + Ope, Fuente_Ope, Brushes.Black, AreaImpresion, eLeft)
+            PDBody.Graphics.DrawString(Texto, Fuente_Texto, Brushes.Black, AreaImpresion, eRight)
+            _Y = _Y + TFuente
+        Else
+            MsgBox("¡No se ha indicado el inicio de documento al crear el Ticket!", vbOKOnly + vbExclamation, "Ticket")
+        End If
+    End Sub
     Private Sub PrintText(ByVal Texto As String, ByVal Fuente_F As Font, Optional ByVal Alineacion As Integer = 1)
         Dim TFuente As Decimal = 12
         If Not IsNothing(PDBody) Then
