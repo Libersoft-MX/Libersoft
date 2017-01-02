@@ -1,8 +1,9 @@
 ﻿Imports iTextSharp.text.pdf
 Imports System.Drawing
-Public Class cBarCode
+Public Class CodigoBarra
 
 #Region "Code39"
+
     ''' <summary>
     ''' Devuelve la imagen de código de barras del número especificado
     ''' </summary>
@@ -14,7 +15,7 @@ Public Class cBarCode
     Public Function CodigoDeBarra(ByVal Codigo As String, Optional ByVal Numero As Boolean = False, Optional ByVal Tamaño As Integer = 50) As Bitmap
         Return GenerarBarCode(Codigo, Numero, Tamaño)
     End Function
-    Private Shared Function GenerarBarCode(ByVal _code As String, Optional ByVal PrintTextInCode As Boolean = False, Optional ByVal Height As Single = 50, Optional ByVal GenerateChecksum As Boolean = False, Optional ByVal ChecksumText As Boolean = False) As Bitmap
+    Private Function GenerarBarCode(ByVal _code As String, Optional ByVal PrintTextInCode As Boolean = False, Optional ByVal Height As Single = 50, Optional ByVal GenerateChecksum As Boolean = False, Optional ByVal ChecksumText As Boolean = False) As Bitmap
         If _code.Trim = "" Then
             Return Nothing
         Else

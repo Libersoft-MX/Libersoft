@@ -505,7 +505,7 @@ Public Class cImpresoraTickets
     ''' Agrega una linea al documento. Alineación: 0-> Izquierda; 1->Centro; 2-> Derecha
     ''' </summary>
     ''' <param name="Texto">Texto a imprimir</param>
-    ''' <param name="Fuente_F">Titulo; Encabezado; Cuerpo; Columna</param>
+    ''' <param name="Fuente_Ope">Titulo; Encabezado; Cuerpo; Columna</param>
     ''' <param name="Alineacion">Alineación: 0-> Izquierda; 1->Centro; 2-> Derecha</param>
     ''' <remarks></remarks>
 

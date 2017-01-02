@@ -4,7 +4,7 @@ Imports System.Windows.Forms            'Usado para el DataGridView
 Imports System.Drawing.Printing         'Usado para imprimir con PrintDocument
 
 #End Region
-Public Class cTicket
+Public Class Ticket
 #Region "Declaraciones de Datos del ticket"
     '***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET ***** DATOS DEL TICKET *****************
 
@@ -689,7 +689,7 @@ Public Class cTicket
                 PrintText("Efectivo: $" + Format((_Efectivo * 1), "##,##0.00"), Columna_F)
                 PrintText("Cambio: $" + Format((_Efectivo - _Total), "##,##0.00"), Columna_F)
             End If
-            
+
             eSpace(2)
         End If
 
