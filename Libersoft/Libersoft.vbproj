@@ -69,6 +69,7 @@
   <ItemGroup>
     <Compile Include="CodigoBarra.vb" />
     <Compile Include="cImpresoraTickets.vb" />
+    <Compile Include="Debug.vb" />
     <Compile Include="Ticket.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
